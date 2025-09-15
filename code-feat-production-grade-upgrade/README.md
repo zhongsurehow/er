@@ -75,6 +75,7 @@
     -   (可选) 您可以在此文件中设置 `SQLITE_DB_PATH` 来指定数据库文件的位置，默认值为 `data/crypto_data.db`。您也可以设置API密钥。
 
 5.  **启动应用**
+    -   **重要**: 请务必使用 `streamlit run` 命令来启动应用。直接使用 `python src/app.py` 将无法正常工作并会导致 `Missing ScriptRunContext` 警告。
     -   在项目根目录下运行以下命令：
         ```bash
         streamlit run src/app.py

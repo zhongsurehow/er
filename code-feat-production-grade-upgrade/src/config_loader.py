@@ -80,4 +80,10 @@ def load_app_config() -> dict:
     qualitative_data_path = os.path.join(config_base_path, 'qualitative_data.yml')
     config['qualitative_data'] = load_yaml_config(qualitative_data_path)
 
+    # --- Final Validation ---
+    required_keys = ['arbitrage', 'qualitative_data', 'api_keys']
+    for key in required_keys:
+        if key not in config or not isinstance(config[key], dict):
+            raise ConfigError(f"'{key}' section is missing or invalid in configuration.")
+
     return config
