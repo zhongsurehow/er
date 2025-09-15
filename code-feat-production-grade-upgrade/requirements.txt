@@ -8,7 +8,7 @@ ccxt-pro
 # pip install git+https://github.com/kroitor/ccxt.pro.git#subdirectory=python
 web3
 httpx
-asyncpg
+aiosqlite
 plotly
 python-dotenv
 faker

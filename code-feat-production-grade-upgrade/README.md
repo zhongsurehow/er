@@ -8,12 +8,12 @@
   - **实时行情**: 通过 WebSocket 实时获取多个交易所的行情数据。
   - **历史K线图 (带缓存)**: 获取并展示历史K线图。首次获取的数据会 **自动缓存** 到本地 `data/` 目录下的 CSV 文件中，加速后续加载。
   - **市场深度**: 动态、交互式地展示所选交易对的市场深度图。
-  - **跨平台套利**: 内置套利引擎，实时分析价差，并精确计算扣除手续费后的净利润。
+  - **综合套利分析**: 一个为套利者设计的高级视图，结合了价格、费用和 **订单簿流动性**，以提供更真实的盈利能力图景。
   - **费用分析**: 对比不同交易所、不同资产的 **充值 (Deposit)** 和 **提现 (Withdrawal)** 网络及手续费。
-  - **定性数据对比**: 提供一个全面的、手动维护的交易所信息库 (`config/qualitative_data.yml`)，包含安全、客服、费率等多维度信息。
+  - **定性数据对比**: 一个可同时比较多个交易所定性数据的表格视图，信息库 (`config/qualitative_data.yml`) 手动维护，包含安全、客服、费率等多维度信息。
 - **数据持久化**:
   - **历史K线缓存**: 将下载的K线数据保存为CSV文件，避免重复请求。
-  - **实时数据存储**: (可选) 使用 `asyncpg` 与 `PostgreSQL/TimescaleDB` 高效集成，存储实时行情数据以供历史分析。
+  - **实时数据存储**: (可选) 使用 **SQLite** 进行轻量级、无服务器的数据持久化，存储实时行情数据以供历史分析。
 - **现代化Web界面**:
   - 基于 `Streamlit` 构建，通过清晰的标签页展示不同功能模块。
 - **容器化部署**:
@@ -21,36 +21,32 @@
 
 ## 技术架构与原理
 
-项目采用模块化的 `src` 布局，将业务逻辑、UI和数据提供者清晰分离，易于维护和扩展。
+项目采用模块化的 `src` 布局，将业务逻辑、UI和数据提供者清晰分离，易于维护和扩展。数据库已从PostgreSQL迁移到SQLite，大大简化了部署和本地设置。
 
-### 新版文件结构
+### 文件结构
 
 ```
 .
 ├── src/                    # 应用源代码
 │   ├── app.py              # Streamlit 应用主入口
-│   ├── config.py           # 配置加载模块
-│   ├── config_loader.py    # UI无关的配置加载逻辑
-│   ├── db.py               # 数据库管理器
+│   ├── config_loader.py    # 配置加载逻辑
+│   ├── db.py               # 数据库管理器 (SQLite)
 │   ├── engine.py           # 套利引擎
-│   ├── providers/          # 数据提供者模块 (CEX, DEX, Bridge)
-│   └── ui/                 # UI 组件和标签页模块
+│   └── ...
 ├── config/                 # 配置文件
-│   ├── fees.yml            # 套利引擎的手续费配置
-│   └── qualitative_data.yml # 交易所定性信息
-├── data/                   # 本地数据缓存目录 (自动创建)
+│   ├── fees.yml
+│   └── qualitative_data.yml
+├── data/                   # 本地数据缓存目录 (包括SQLite数据库文件)
 ├── tests/                  # 测试套件
-├── .env.example            # 环境变量模板
+├── .env                    # 环境变量文件 (本地创建)
 ├── requirements.txt        # Python 依赖
 ├── Dockerfile
-└── docker-compose.yml
+└── docker-compose.yml      # 简化的单服务Docker配置
 ```
 
 ---
 
 ## 运行指南
-
-您可以选择通过本地 Python 环境或 Docker 来运行此应用。
 
 ### 方案一：在本地 Python 环境中运行 (推荐用于开发)
 
@@ -74,16 +70,9 @@
     pip install -r requirements.txt
     ```
 
-4.  **创建并配置环境变量文件 (`.env`)**
+4.  **创建环境变量文件 (`.env`)**
     -   在项目根目录下创建一个名为 `.env` 的文件。
-    -   打开 `.env` 文件并根据您的运行环境进行配置。
-    -   **数据库连接 (`DB_DSN`)**:
-        -   **若使用Docker运行 (方案二)**: `DB_DSN` 应指向Docker网络中的数据库服务。请使用 `DB_DSN=postgresql://user:password@db:5432/crypto_data`。
-        -   **若在本地运行 (方案一)**: 并且您希望连接到本地（或Docker暴露到主机）的数据库，`DB_DSN` 应指向 `localhost`。请使用 `DB_DSN=postgresql://user:password@localhost:5432/crypto_data`。
-        -   如果将此项留空，历史数据分析功能将被禁用，但应用的其他部分仍可运行。
-    -   **其他可选变量**:
-        -   `RPC_URL_ETHEREUM`: (可选) 您的以太坊主网 RPC URL，用于DEX数据。
-        -   `BINANCE_API_KEY`, `OKX_API_KEY` 等: (可选) 目前主要用于获取转账费用，未来可用于私有API功能。
+    -   (可选) 您可以在此文件中设置 `SQLITE_DB_PATH` 来指定数据库文件的位置，默认值为 `data/crypto_data.db`。您也可以设置API密钥。
 
 5.  **启动应用**
     -   在项目根目录下运行以下命令：
@@ -96,14 +85,14 @@
 
 1.  **准备环境**: 确保已安装 [Docker](https://www.docker.com/products/docker-desktop/) 和 [Docker Compose](https://docs.docker.com/compose/install/)。
 
-2.  **配置 `.env` 文件**: 同上，复制 `.env.example` 到 `.env` 并进行配置。
+2.  **启动服务**:
+    -   此命令将构建镜像并以后台模式启动应用。
+        ```bash
+        docker compose up --build -d
+        ```
+    -   数据库文件将自动在 `data/` 目录下创建，并通过卷挂载持久化。
 
-3.  **启动服务**:
-    ```bash
-    docker-compose up --build
-    ```
-
-4.  **访问应用**: 打开浏览器，访问 `http://localhost:8501`。
+3.  **访问应用**: 打开浏览器，访问 `http://localhost:8501`。
 
 ---
 
@@ -113,10 +102,10 @@
 
 1.  **安装测试依赖**
     ```bash
-    pip install pytest pytest-asyncio
+    pip install -r requirements.txt
     ```
 2.  **运行测试**
-    -   在项目根目录下，直接运行 `pytest` 即可。
+    -   在项目根目录下，运行以下命令以确保 `src` 目录在Python的路径中：
     ```bash
-    pytest
+    PYTHONPATH=. pytest
     ```

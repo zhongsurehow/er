@@ -43,7 +43,8 @@ def load_app_config() -> dict:
     config_base_path = os.getenv("CONFIG_PATH", "config")
 
     # --- Database Configuration ---
-    config['db_dsn'] = os.getenv("DB_DSN")
+    # Use a simple file path for SQLite. Default to a file in a 'data' directory.
+    config['sqlite_db_path'] = os.getenv("SQLITE_DB_PATH", "data/crypto_data.db")
 
     # --- RPC URLs for DEX Providers ---
     config['rpc_urls'] = {

@@ -615,3 +615,62 @@ def show_comprehensive_arbitrage_tab(arbitrage_engine):
 
             except Exception as e:
                 display_error(f"综合套利分析过程中发生错误: {e}")
+
+# --- 标签 10: 资产转账分析 ---
+
+def show_asset_transfer_tab(cex_providers):
+    """
+    显示一个用于分析单个资产在多个交易所之间的转账费用和网络的视图。
+    """
+    st.header("🪙 资产转账分析")
+    st.info("输入一个资产代码（如USDT），以表格形式并排比较不同交易所的提现网络和费用。")
+
+    if not cex_providers:
+        st.warning("请在侧边栏中至少选择一个中心化交易所。")
+        return
+
+    asset = st.text_input("输入要比较的资产代码", "USDT", key="transfer_asset_input").upper()
+
+    if st.button("比较资产转账选项", key="compare_transfers"):
+        if not asset:
+            st.warning("请输入一个资产代码。")
+            return
+
+        async def fetch_all_fees():
+            tasks = [provider.get_transfer_fees(asset) for provider in cex_providers]
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        with st.spinner(f"正在从所有选定的交易所获取 {asset} 的转账费用..."):
+            results = safe_run_async(fetch_all_fees())
+
+        all_networks = set()
+        processed_data = {}
+        failed_providers = []
+
+        for i, res in enumerate(results):
+            provider_name = cex_providers[i].name.capitalize()
+            if isinstance(res, dict) and 'error' not in res and res.get(asset):
+                withdraw_info = res[asset].get('networks', {}).get('withdraw', {})
+                processed_data[provider_name] = {}
+                for network, details in withdraw_info.items():
+                    all_networks.add(network)
+                    fee = details.get('fee')
+                    processed_data[provider_name][network] = f"{fee:.6f}".rstrip('0').rstrip('.') if fee is not None else "N/A"
+            else:
+                failed_providers.append(provider_name)
+
+        if failed_providers:
+            st.error(f"无法获取以下交易所的费用数据: {', '.join(failed_providers)}。它们可能不支持资产 '{asset}' 或API不可用。")
+
+        if not processed_data:
+            st.warning(f"未能成功获取任何交易所关于 '{asset}' 的费用数据。")
+            return
+
+        # Create a DataFrame from the processed data
+        df = pd.DataFrame(processed_data)
+
+        # Reindex to ensure all networks are present for all exchanges
+        df = df.reindex(sorted(list(all_networks))).fillna("不支持")
+
+        st.subheader(f"{asset} 提现费用对比")
+        st.dataframe(df, use_container_width=True)

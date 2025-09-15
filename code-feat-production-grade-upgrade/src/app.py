@@ -13,7 +13,7 @@ from .engine import ArbitrageEngine
 from .providers.cex import CEXProvider
 from .providers.dex import DEXProvider
 from .providers.bridge import BridgeProvider
-from .ui.tabs import show_realtime_tab, show_depth_tab, show_arbitrage_tab, show_history_tab, show_kline_tab, show_api_guide_tab, show_comprehensive_arbitrage_tab
+from .ui.tabs import show_realtime_tab, show_depth_tab, show_arbitrage_tab, show_history_tab, show_kline_tab, show_api_guide_tab, show_comprehensive_arbitrage_tab, show_asset_transfer_tab
 from .ui.components import sidebar_controls
 
 # Apply nest_asyncio to allow running asyncio event loops within Streamlit's loop
@@ -53,42 +53,19 @@ def get_config():
     return load_config()
 
 @st.cache_resource
-def get_db_manager(dsn):
-    """Create and cache the database manager and its connection pool."""
-    if not dsn:
-        st.warning("数据库DSN未配置，历史分析功能将被禁用。")
+def get_db_manager(db_path: str):
+    """Create and cache the database manager for the SQLite connection."""
+    if not db_path:
+        st.warning("数据库文件路径未配置，历史分析功能将被禁用。")
         return None
     try:
-        db_manager = DatabaseManager(dsn)
+        db_manager = DatabaseManager(db_path)
         # nest_asyncio.apply() at the top of the file handles event loop integration.
-        # A simple asyncio.run() should be sufficient and robust here.
         asyncio.run(db_manager.connect())
         asyncio.run(db_manager.init_db())
         return db_manager
-    except OSError as e:
-        if "getaddrinfo failed" in str(e):
-            st.error(
-                "**数据库连接失败：无法解析主机名。**\n\n"
-                "这通常意味着您正在本地运行此应用，但数据库连接字符串 (`DB_DSN`) "
-                "指向的是Docker内部主机 (`db`)。\n\n"
-                "**解决方案：**\n"
-                "1. 打开项目根目录下的 `.env` 文件。\n"
-                "2. 注释掉为Docker准备的行：\n"
-                "   ```\n"
-                "   # DB_DSN=postgresql://user:password@db:5432/crypto_data\n"
-                "   ```\n"
-                "3. 取消注释为本地运行准备的行：\n"
-                "   ```\n"
-                "   DB_DSN=postgresql://user:password@localhost:5432/crypto_data\n"
-                "   ```\n"
-                "4. 重新启动Streamlit应用。",
-                icon="🚨"
-            )
-        else:
-            st.error(f"连接数据库时发生操作系统错误: {e}")
-        return None
     except Exception as e:
-        st.error(f"连接数据库时发生未知错误: {e}")
+        st.error(f"连接或初始化SQLite数据库时失败: {e}")
         return None
 
 @st.cache_resource
@@ -155,7 +132,7 @@ def main():
     sidebar_controls()
 
     # Initialize managers
-    db_manager = get_db_manager(config.get("db_dsn"))
+    db_manager = get_db_manager(config.get("sqlite_db_path"))
 
     # Get providers based on current selection in session state
     # Pass session_state explicitly because it's used as part of the cache key for get_providers
@@ -168,7 +145,7 @@ def main():
     cex_providers = [p for p in providers if isinstance(p, CEXProvider)]
 
     if st.session_state.get('demo_mode', True):
-        tab_names = ["🎯 功能指南", "实时行情", "市场深度", "📈 K线图", "套利机会", "综合套利分析", "费用对比", "交易所对比", "历史分析", "API 指南"]
+        tab_names = ["🎯 功能指南", "实时行情", "市场深度", "📈 K线图", "套利机会", "综合套利分析", "资产转账分析", "费用对比", "交易所对比", "历史分析", "API 指南"]
         tabs = st.tabs(tab_names)
         tab_map = {name: tab for name, tab in zip(tab_names, tabs)}
         
@@ -177,7 +154,7 @@ def main():
             show_demo_guide()
             show_feature_highlights()
     else:
-        tab_names = ["实时行情", "市场深度", "📈 K线图", "套利机会", "综合套利分析", "费用对比", "交易所对比", "历史分析", "API 指南"]
+        tab_names = ["实时行情", "市场深度", "📈 K线图", "套利机会", "综合套利分析", "资产转账分析", "费用对比", "交易所对比", "历史分析", "API 指南"]
         tabs = st.tabs(tab_names)
         tab_map = {name: tab for name, tab in zip(tab_names, tabs)}
 
@@ -195,6 +172,9 @@ def main():
 
     with tab_map["综合套利分析"]:
         show_comprehensive_arbitrage_tab(arbitrage_engine)
+
+    with tab_map["资产转账分析"]:
+        show_asset_transfer_tab(cex_providers)
 
     with tab_map["费用对比"]:
         from .ui.tabs import show_fees_tab

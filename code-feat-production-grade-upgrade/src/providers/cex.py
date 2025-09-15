@@ -95,25 +95,59 @@ class MockExchange:
         await asyncio.sleep(0.01)
 
     def fetch_deposit_withdraw_fees(self, codes=None, params={}):
-        """Simulates fetching deposit and withdrawal fees."""
-        logger.info("Mock exchange: fetching deposit/withdraw fees.")
-        return {
+        """Simulates fetching deposit and withdrawal fees for multiple assets."""
+        logger.info(f"Mock exchange: fetching deposit/withdraw fees for codes: {codes}")
+
+        # Base fees for different assets
+        mock_fees = {
             'USDT': {
-                'info': {'coin': 'USDT'},
-                'networks': {
-                    'deposit': {
-                        'TRX': {'fee': 0.0, 'percentage': False},
-                        'ERC20': {'fee': 0.0, 'percentage': False},
-                        'SOL': {'fee': 0.0, 'percentage': False},
-                    },
-                    'withdraw': {
-                        'TRX': {'fee': 1.0, 'percentage': False},
-                        'ERC20': {'fee': 25.0, 'percentage': False},
-                        'SOL': {'fee': 0.5, 'percentage': False},
-                    }
+                'withdraw': {
+                    'TRX': {'fee': 1.0 + random.uniform(-0.2, 0.2), 'percentage': False},
+                    'ERC20': {'fee': 15.0 + random.uniform(-5, 5), 'percentage': False},
+                    'SOL': {'fee': 0.5 + random.uniform(-0.1, 0.1), 'percentage': False},
+                    'Polygon': {'fee': 0.8 + random.uniform(-0.1, 0.1), 'percentage': False},
+                }
+            },
+            'USDC': {
+                'withdraw': {
+                    'TRX': {'fee': 1.2 + random.uniform(-0.2, 0.2), 'percentage': False},
+                    'ERC20': {'fee': 12.0 + random.uniform(-4, 4), 'percentage': False},
+                    'Arbitrum': {'fee': 0.7 + random.uniform(-0.1, 0.1), 'percentage': False},
+                }
+            },
+            'BTC': {
+                 'withdraw': {
+                    'Bitcoin': {'fee': 0.0002 + random.uniform(-0.00005, 0.00005), 'percentage': False},
+                    'Lightning': {'fee': 0.0, 'percentage': False},
+                    'BSC': {'fee': 0.000005, 'percentage': False},
                 }
             }
         }
+
+        asset = (codes[0] if codes else "USDT").upper()
+
+        if asset not in mock_fees:
+            return {}
+
+        # Create a full structure with deposit info
+        asset_fees = mock_fees[asset]
+        response = {
+            asset: {
+                'info': {'coin': asset},
+                'networks': {
+                    'deposit': {net: {'fee': 0.0, 'percentage': False} for net in asset_fees['withdraw']},
+                    'withdraw': asset_fees['withdraw']
+                }
+            }
+        }
+        # Simulate some exchanges not supporting all networks
+        if random.random() < 0.3:
+            networks_to_remove = random.sample(list(response[asset]['networks']['withdraw'].keys()), k=1)
+            for net in networks_to_remove:
+                del response[asset]['networks']['withdraw'][net]
+                del response[asset]['networks']['deposit'][net]
+
+        return response
 
     async def fetch_ohlcv(self, symbol: str, timeframe: str = '1d', limit: int = 100, params={}) -> List[List]:
         """Simulates fetching historical OHLCV data."""
