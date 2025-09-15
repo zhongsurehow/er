@@ -300,3 +300,56 @@ class CEXProvider(BaseProvider):
         except Exception as e:
             logger.error(f"Could not fetch transfer fees for {asset} from {self.name}: {e}")
             return {'asset': asset, 'error': str(e)}
+
+    async def get_liquidity_within_percentage(self, symbol: str, percentage: float = 0.01) -> Dict[str, Any]:
+        """
+        Calculates the value of bids and asks within a given percentage of the mid-price.
+
+        Args:
+            symbol: The trading symbol (e.g., 'BTC/USDT').
+            percentage: The percentage range (e.g., 0.01 for 1%) around the mid-price.
+
+        Returns:
+            A dictionary containing the liquidity for bids and asks in quote currency (USD),
+            and the current mid-price.
+        """
+        try:
+            # Fetch both order book and ticker data concurrently for efficiency
+            order_book_task = self.get_order_book(symbol)
+            ticker_task = self.get_ticker(symbol)
+            order_book, ticker = await asyncio.gather(order_book_task, ticker_task)
+
+            if 'error' in order_book or 'error' in ticker:
+                return {'symbol': symbol, 'error': 'Failed to fetch order book or ticker.'}
+
+            # Calculate mid-price from the ticker for accuracy
+            bid_price = ticker.get('bid')
+            ask_price = ticker.get('ask')
+            if not bid_price or not ask_price:
+                return {'symbol': symbol, 'error': 'Ticker missing bid/ask prices.'}
+
+            mid_price = (bid_price + ask_price) / 2
+            price_range = mid_price * percentage
+
+            # Define the price boundaries
+            lower_bound = mid_price - price_range
+            upper_bound = mid_price + price_range
+
+            # Calculate total value within the range
+            bid_liquidity = sum(
+                p * v for p, v in order_book.get('bids', []) if p >= lower_bound
+            )
+            ask_liquidity = sum(
+                p * v for p, v in order_book.get('asks', []) if p <= upper_bound
+            )
+
+            return {
+                'symbol': symbol,
+                'bid_liquidity_usd': bid_liquidity,
+                'ask_liquidity_usd': ask_liquidity,
+                'mid_price': mid_price
+            }
+
+        except Exception as e:
+            logger.error(f"Could not calculate liquidity for {symbol} from {self.name}: {e}")
+            return {'symbol': symbol, 'error': str(e)}

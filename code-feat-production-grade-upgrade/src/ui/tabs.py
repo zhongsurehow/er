@@ -508,3 +508,110 @@ def show_api_guide_tab():
 
     利用这些资源，您可以更好地了解本工具如何与交易所互动，并根据需要进行扩展。
     """)
+
+# --- 标签 9: 综合套利分析 ---
+
+def show_comprehensive_arbitrage_tab(arbitrage_engine):
+    """
+    显示一个高级套利分析视图，结合了价格、费用、流动性和定性数据。
+    """
+    st.header("🔬 综合套利分析")
+    st.info("这个高级视图旨在结合实时价格、预估费用和订单簿流动性，以提供更全面的套利机会图景。")
+
+    # --- UI Controls ---
+    col1, col2 = st.columns([3, 1])
+    liquidity_pct = col2.slider(
+        "流动性深度 (%)",
+        min_value=0.1,
+        max_value=5.0,
+        value=1.0,
+        step=0.1,
+        help="计算订单簿中距离中间价指定百分比范围内的流动性总价值。"
+    ) / 100.0
+
+    if st.button("🔍 分析全面套利机会"):
+        with st.spinner("正在运行全面分析（获取价格、费用和流动性数据）..."):
+            try:
+                # 1. Find basic opportunities (prices and fees)
+                opportunities = safe_run_async(arbitrage_engine.find_opportunities(st.session_state.selected_symbols))
+                if opportunities is None:
+                    opportunities = []
+
+                if not opportunities:
+                    st.success("✅ 未发现潜在的套利机会。")
+                    return
+
+                # 2. Enrich opportunities with liquidity data
+                async def enrich_opportunities(opps):
+                    tasks = []
+                    for opp in opps:
+                        buy_provider = next((p for p in arbitrage_engine.providers if p.name == opp['buy_at']), None)
+                        sell_provider = next((p for p in arbitrage_engine.providers if p.name == opp['sell_at']), None)
+
+                        if buy_provider and hasattr(buy_provider, 'get_liquidity_within_percentage'):
+                            tasks.append(buy_provider.get_liquidity_within_percentage(opp['symbol'], liquidity_pct))
+                        else:
+                            tasks.append(asyncio.sleep(0, result={'symbol': opp['symbol'], 'error': 'Liquidity fetch not supported'}))
+
+                        if sell_provider and hasattr(sell_provider, 'get_liquidity_within_percentage'):
+                            tasks.append(sell_provider.get_liquidity_within_percentage(opp['symbol'], liquidity_pct))
+                        else:
+                             tasks.append(asyncio.sleep(0, result={'symbol': opp['symbol'], 'error': 'Liquidity fetch not supported'}))
+
+                    liquidity_results = await asyncio.gather(*tasks, return_exceptions=True)
+                    return liquidity_results
+
+                liquidity_data = safe_run_async(enrich_opportunities(opportunities))
+
+                # Process liquidity data into a more accessible dict
+                liquidity_map = {}
+                for i in range(0, len(liquidity_data), 2):
+                    buy_res = liquidity_data[i]
+                    sell_res = liquidity_data[i+1]
+                    opp = opportunities[i//2]
+
+                    liquidity_map[opp['id']] = {
+                        'buy_liquidity': buy_res.get('ask_liquidity_usd', 0) if isinstance(buy_res, dict) else 0,
+                        'sell_liquidity': sell_res.get('bid_liquidity_usd', 0) if isinstance(sell_res, dict) else 0
+                    }
+
+                # 3. Combine all data into a final list
+                comprehensive_opps = []
+                for opp in opportunities:
+                    opp.update(liquidity_map.get(opp['id'], {}))
+                    comprehensive_opps.append(opp)
+
+                # 4. Display in a DataFrame
+                if not comprehensive_opps:
+                    st.warning("已找到价格差异，但无法获取流动性数据。")
+                    return
+
+                df = pd.DataFrame(comprehensive_opps)
+
+                # Select and rename columns for the final display
+                display_df = df[[
+                    'symbol', 'buy_at', 'sell_at', 'buy_price', 'sell_price',
+                    'net_profit_usd', 'profit_percentage', 'buy_liquidity', 'sell_liquidity'
+                ]]
+                display_df.columns = [
+                    '交易对', '买入平台', '卖出平台', '买入价', '卖出价',
+                    '净利润 (USD)', '净利润 %', f'买方流动性 (±{liquidity_pct*100:.1f}%)', f'卖方流动性 (±{liquidity_pct*100:.1f}%)'
+                ]
+
+                st.success(f"🎉 发现 {len(display_df)} 个全面套利机会！")
+                st.dataframe(
+                    display_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "买入价": st.column_config.NumberColumn(format="$%.4f"),
+                        "卖出价": st.column_config.NumberColumn(format="$%.4f"),
+                        "净利润 (USD)": st.column_config.NumberColumn(format="$%.4f"),
+                        "净利润 %": st.column_config.NumberColumn(format="%.4f%%"),
+                        f'买方流动性 (±{liquidity_pct*100:.1f}%)': st.column_config.NumberColumn(format="$%.2f"),
+                        f'卖方流动性 (±{liquidity_pct*100:.1f}%)': st.column_config.NumberColumn(format="$%.2f"),
+                    }
+                )
+
+            except Exception as e:
+                display_error(f"综合套利分析过程中发生错误: {e}")

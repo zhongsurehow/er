@@ -109,6 +109,7 @@ class ArbitrageEngine:
                     total_fees_usd = buy_fee_usd + sell_fee_usd + withdrawal_fee_usd
 
                     opportunity = {
+                        'id': f"{symbol}-{buy_provider_name}-{sell_provider_name}",
                         'symbol': symbol,
                         'buy_at': buy_provider_name,
                         'sell_at': sell_provider_name,
