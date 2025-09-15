@@ -324,7 +324,11 @@ def show_comparison_tab(qualitative_data: dict):
         'margin_leverage_details': '杠杆交易详情',
         'maintenance_schedule': '维护计划',
         'user_rating_summary': '用户评分摘要',
-        'tax_compliance_info': '税务合规信息'
+        'tax_compliance_info': '税务合规信息',
+        'deposit_networks': '充值网络',
+        'deposit_fees': '充值费用',
+        'withdrawal_networks': '提现网络',
+        'margin_trading_api': '保证金交易API'
     }
 
     exchange_list = list(qualitative_data.keys())
@@ -461,3 +465,51 @@ def show_kline_tab(cex_providers):
             # Display data table in an expander
             with st.expander("查看原始数据 (包含技术指标)"):
                 st.dataframe(df, use_container_width=True)
+
+# --- 标签 8: API 指南 ---
+
+def show_api_guide_tab():
+    """显示一个提供关于使用免费和公共API信息的指南。"""
+    st.header("🔑 API 集成指南")
+    st.info(
+        "本工具旨在最大化利用交易所提供的公开数据，同时在您提供API密钥时解锁更多功能。"
+    )
+
+    st.markdown("""
+    ### 关于 “免费” API
+
+    许多用户询问“免费API”。在加密货币交易所的背景下，这通常指两种情况：
+
+    1.  **公共/无需密钥的API端点**: 大多数交易所提供无需API密钥即可访问的公共数据。这通常包括：
+        *   **实时价格 (Tickers)**: 获取一个或多个交易对的最新价格。
+        *   **K线/历史数据 (OHLCV)**: 获取历史价格条图。
+        *   **市场深度/订单簿**: 查看当前的买卖订单。
+
+        **本工具默认使用这些公共端点**，因此即使您不提供任何API密钥，大部分核心功能（如行情、K线图、市场深度）也能正常工作。
+
+    2.  **需要密钥的免费API**: 对于更高级或个性化的功能，交易所要求使用API密钥。这些密钥通常可以**免费**在交易所的官方网站上生成。需要密钥的功能包括：
+        *   **账户余额查询**
+        *   **下单/撤单**
+        *   **获取详细的转账费用和网络状态** (本工具使用此功能)
+        *   **更高的请求频率限制**
+
+    ### 如何获取和使用API密钥
+
+    1.  **访问交易所官网**: 登录到您选择的交易所账户 (例如 Binance, OKX)。
+    2.  **找到API管理页面**: 通常在您的用户设置或个人中心下面。
+    3.  **创建API密钥**: 按照指示创建一个新的API密钥。为了安全起见，请确保只授予该密钥所需的权限（例如，仅“读取”权限就足以用于此工具的大部分功能）。
+    4.  **复制API Key和Secret**: 将生成的API Key和Secret Key复制到安全的地方。
+    5.  **在工具中配置**: 将密钥粘贴到本应用左侧边栏的相应输入框中，然后点击“保存密钥”。应用将自动开始使用它们来获取更精确的数据。
+
+    ### 主要交易所API文档
+
+    以下是一些主要交易所的官方API文档链接，您可以在其中找到所有可用端点的详细信息：
+
+    *   **Binance**: [https://binance-docs.github.io/apidocs/spot/en/](https://binance-docs.github.io/apidocs/spot/en/)
+    *   **OKX**: [https://www.okx.com/docs-v5/en/](https://www.okx.com/docs-v5/en/)
+    *   **Bybit**: [https://bybit-exchange.github.io/docs/v5/intro](https://bybit-exchange.github.io/docs/v5/intro)
+    *   **Gate.io**: [https://www.gate.io/docs/apiv4/en/](https://www.gate.io/docs/apiv4/en/)
+    *   **KuCoin**: [https://www.kucoin.com/docs/beginners/introduction](https://www.kucoin.com/docs/beginners/introduction)
+
+    利用这些资源，您可以更好地了解本工具如何与交易所互动，并根据需要进行扩展。
+    """)

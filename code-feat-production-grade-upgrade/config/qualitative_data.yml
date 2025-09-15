@@ -5,7 +5,8 @@
 #   regional_restrictions, withdrawal_limits, withdrawal_speed,
 #   supported_cross_chain_bridges, api_support_details, fee_discounts,
 #   margin_leverage_details, maintenance_schedule, user_rating_summary,
-#   tax_compliance_info
+#   tax_compliance_info, deposit_networks, deposit_fees, withdrawal_networks,
+#   margin_trading_api
 
 binance:
   security_measures: "行业领先的安全性，SAFU基金。"
@@ -22,6 +23,10 @@ binance:
   maintenance_schedule: "提前宣布，通常在低流量时段。"
   user_rating_summary: "功能评分高，但可能会有支持方面的投诉。"
   tax_compliance_info: "为税务目的提供交易历史导出功能。"
+  deposit_networks: "BTC, ETH (ERC20), BSC (BEP20), TRON (TRC20), etc."
+  deposit_fees: "通常免费。"
+  withdrawal_networks: "BTC, ETH (ERC20), BSC (BEP20), TRON (TRC20), etc."
+  margin_trading_api: "是，通过统一的交易API提供。"
 
 okx:
   security_measures: "储备金证明，冷存储，风险管理系统。"
@@ -38,6 +43,10 @@ okx:
   maintenance_schedule: "定期的、预先宣布的维护窗口。"
   user_rating_summary: "因其广泛的功能而备受推崇。"
   tax_compliance_info: "提供交易历史导出工具。"
+  deposit_networks: "BTC, ETH (ERC20), OKTC, TRON (TRC20), etc."
+  deposit_fees: "免费。"
+  withdrawal_networks: "BTC, ETH (ERC20), OKTC, TRON (TRC20), etc."
+  margin_trading_api: "是，包含在主API中。"
 
 bybit:
   security_measures: "多重签名冷钱包，强大的安全审计。"
@@ -54,6 +63,10 @@ bybit:
   maintenance_schedule: "停机时间最短，升级会提前宣布。"
   user_rating_summary: "在性能和衍生品方面评价极高。"
   tax_compliance_info: "提供标准交易历史记录。"
+  deposit_networks: "ETH (ERC20), BSC (BEP20), Arbitrum, etc."
+  deposit_fees: "免费。"
+  withdrawal_networks: "ETH (ERC20), BSC (BEP20), Arbitrum, etc."
+  margin_trading_api: "是，是其API产品的核心部分。"
 
 kucoin:
   security_measures: "银行级资产安全，定期审计。"
@@ -70,6 +83,10 @@ kucoin:
   maintenance_schedule: "提前宣布。"
   user_rating_summary: "因其大量的山寨币选择而被称为“人民的交易所”。"
   tax_compliance_info: "交易历史可供下载。"
+  deposit_networks: "BTC, ETH (ERC20), KCC, TRON (TRC20), etc."
+  deposit_fees: "免费。"
+  withdrawal_networks: "BTC, ETH (ERC20), KCC, TRON (TRC20), etc."
+  margin_trading_api: "是。"
 
 gate:
   security_measures: "储备金证明，漏洞赏金计划。"
@@ -86,6 +103,10 @@ gate:
   maintenance_schedule: "定期安排。"
   user_rating_summary: "因资产种类繁多而受到称赞，因复杂性而受到批评。"
   tax_compliance_info: "标准导出功能。"
+  deposit_networks: "多样的，几乎支持所有上市资产的原生链。"
+  deposit_fees: "免费。"
+  withdrawal_networks: "多样的，几乎支持所有上市资产的原生链。"
+  margin_trading_api: "是。"
 
 mexc:
   security_measures: "先进的风险控制系统，冷存储。"
@@ -102,6 +123,10 @@ mexc:
   maintenance_schedule: "根据需要，通过官方渠道宣布。"
   user_rating_summary: "因在新山寨币中寻找“宝石”的机会而受欢迎。"
   tax_compliance_info: "提供交易记录。"
+  deposit_networks: "ETH (ERC20), BSC (BEP20), TRON (TRC20), etc."
+  deposit_fees: "免费。"
+  withdrawal_networks: "ETH (ERC20), BSC (BEP20), TRON (TRC20), etc."
+  margin_trading_api: "是。"
 
 bitget:
   security_measures: "储备金证明，保护基金。"
@@ -118,6 +143,10 @@ bitget:
   maintenance_schedule: "预先宣布的维护。"
   user_rating_summary: "因其社交/跟单交易功能而获得高度评价。"
   tax_compliance_info: "标准交易历史导出。"
+  deposit_networks: "ETH (ERC20), BSC (BEP20), TRON (TRC20), etc."
+  deposit_fees: "免费。"
+  withdrawal_networks: "ETH (ERC20), BSC (BEP20), TRON (TRC20), etc."
+  margin_trading_api: "是。"
 
 htx:
   security_measures: "储备金证明，安全储备基金。"
@@ -134,3 +163,7 @@ htx:
   maintenance_schedule: "定期安排的维护。"
   user_rating_summary: "一家历史悠久、声誉卓著的老牌交易所。"
   tax_compliance_info: "为用户提供必要的交易数据。"
+  deposit_networks: "ETH (ERC20), HECO, TRON (TRC20), etc."
+  deposit_fees: "免费。"
+  withdrawal_networks: "ETH (ERC20), HECO, TRON (TRC20), etc."
+  margin_trading_api: "是。"

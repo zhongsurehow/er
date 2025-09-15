@@ -13,7 +13,7 @@ from .engine import ArbitrageEngine
 from .providers.cex import CEXProvider
 from .providers.dex import DEXProvider
 from .providers.bridge import BridgeProvider
-from .ui.tabs import show_realtime_tab, show_depth_tab, show_arbitrage_tab, show_history_tab, show_kline_tab
+from .ui.tabs import show_realtime_tab, show_depth_tab, show_arbitrage_tab, show_history_tab, show_kline_tab, show_api_guide_tab
 from .ui.components import sidebar_controls
 
 # Apply nest_asyncio to allow running asyncio event loops within Streamlit's loop
@@ -163,7 +163,7 @@ def main():
     cex_providers = [p for p in providers if isinstance(p, CEXProvider)]
 
     if st.session_state.get('demo_mode', True):
-        tab_names = ["🎯 功能指南", "实时行情", "市场深度", "📈 K线图", "套利机会", "费用对比", "交易所对比", "历史分析"]
+        tab_names = ["🎯 功能指南", "实时行情", "市场深度", "📈 K线图", "套利机会", "费用对比", "交易所对比", "历史分析", "API 指南"]
         tabs = st.tabs(tab_names)
         tab_map = {name: tab for name, tab in zip(tab_names, tabs)}
         
@@ -172,7 +172,7 @@ def main():
             show_demo_guide()
             show_feature_highlights()
     else:
-        tab_names = ["实时行情", "市场深度", "📈 K线图", "套利机会", "费用对比", "交易所对比", "历史分析"]
+        tab_names = ["实时行情", "市场深度", "📈 K线图", "套利机会", "费用对比", "交易所对比", "历史分析", "API 指南"]
         tabs = st.tabs(tab_names)
         tab_map = {name: tab for name, tab in zip(tab_names, tabs)}
 
@@ -198,6 +198,9 @@ def main():
 
     with tab_map["历史分析"]:
         show_history_tab(db_manager)
+
+    with tab_map["API 指南"]:
+        show_api_guide_tab()
 
 
 if __name__ == "__main__":
