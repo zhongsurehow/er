@@ -75,12 +75,13 @@
     ```
 
 4.  **创建并配置环境变量文件 (`.env`)**
-    -   将 `.env.example` 文件复制一份，并重命名为 `.env`。
-        ```bash
-        cp .env.example .env
-        ```
-    -   打开 `.env` 文件并根据需要进行配置。对于大部分公开数据的功能，您**无需**填写API密钥。
-        -   `DB_DSN`: (可选) 用于存储实时数据的数据库连接字符串。如果留空，相关功能将被禁用。
+    -   在项目根目录下创建一个名为 `.env` 的文件。
+    -   打开 `.env` 文件并根据您的运行环境进行配置。
+    -   **数据库连接 (`DB_DSN`)**:
+        -   **若使用Docker运行 (方案二)**: `DB_DSN` 应指向Docker网络中的数据库服务。请使用 `DB_DSN=postgresql://user:password@db:5432/crypto_data`。
+        -   **若在本地运行 (方案一)**: 并且您希望连接到本地（或Docker暴露到主机）的数据库，`DB_DSN` 应指向 `localhost`。请使用 `DB_DSN=postgresql://user:password@localhost:5432/crypto_data`。
+        -   如果将此项留空，历史数据分析功能将被禁用，但应用的其他部分仍可运行。
+    -   **其他可选变量**:
         -   `RPC_URL_ETHEREUM`: (可选) 您的以太坊主网 RPC URL，用于DEX数据。
         -   `BINANCE_API_KEY`, `OKX_API_KEY` 等: (可选) 目前主要用于获取转账费用，未来可用于私有API功能。
 

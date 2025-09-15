@@ -60,30 +60,14 @@ def get_db_manager(dsn):
         return None
     try:
         db_manager = DatabaseManager(dsn)
-        # 使用nest_asyncio来处理事件循环冲突
-        import nest_asyncio
-        nest_asyncio.apply()
-        
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # 在已运行的事件循环中直接运行
-                asyncio.run(db_manager.connect())
-                asyncio.run(db_manager.init_db())
-            else:
-                asyncio.run(db_manager.connect())
-                asyncio.run(db_manager.init_db())
-        except RuntimeError:
-            # 如果出现事件循环错误，尝试创建新的事件循环
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-            new_loop.run_until_complete(db_manager.connect())
-            new_loop.run_until_complete(db_manager.init_db())
-            new_loop.close()
-        
+        # nest_asyncio.apply() at the top of the file handles event loop integration.
+        # A simple asyncio.run() should be sufficient and robust here.
+        asyncio.run(db_manager.connect())
+        asyncio.run(db_manager.init_db())
         return db_manager
     except Exception as e:
-        st.error(f"连接数据库失败: {e}")
+        # Provide a more specific error message based on the user's report.
+        st.error(f"连接数据库失败: {e}. 请检查您的DB_DSN环境变量是否正确，特别是对于本地运行，请确保主机名是'localhost'而不是'db'。")
         return None
 
 @st.cache_resource

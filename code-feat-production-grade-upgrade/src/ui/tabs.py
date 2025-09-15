@@ -132,7 +132,7 @@ def show_depth_tab(cex_providers):
             if order_book and 'error' in order_book:
                 display_error(f"无法获取订单簿: {order_book['error']}")
             else:
-                st.plotly_chart(_create_depth_chart(order_book), use_container_width=True)
+                st.plotly_chart(_create_depth_chart(order_book), width='container')
 
 # --- 标签 3: 套利机会 ---
 
@@ -226,7 +226,7 @@ def show_history_tab(db_manager):
                         provider_df = df[df['provider_name'] == provider]
                         fig.add_trace(go.Scatter(x=provider_df['timestamp'], y=provider_df['price'], mode='lines', name=provider))
                     fig.update_layout(title=f"{symbol} 的价格历史", xaxis_title="时间戳", yaxis_title="价格 (USD)")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='container')
             except Exception as e:
                 display_error(f"查询数据库时发生错误: {e}")
 
@@ -301,9 +301,9 @@ def show_fees_tab(cex_providers):
 # --- 标签 6: 定性交易所对比 ---
 
 def show_comparison_tab(qualitative_data: dict):
-    """显示一个用于比较交易所定性数据的标签页。"""
-    st.header("🏢 交易所对比")
-    st.info("查看手动整理的关于不同交易所的信息。")
+    """以表格形式并排显示所选交易所的定性数据，以便于比较。"""
+    st.header("🏢 交易所定性对比")
+    st.info("选择多个交易所，以表格形式并排比较它们的特点。")
 
     if not qualitative_data:
         st.warning("未找到定性数据。请检查 `qualitative_data.yml` 文件。")
@@ -332,37 +332,32 @@ def show_comparison_tab(qualitative_data: dict):
     }
 
     exchange_list = list(qualitative_data.keys())
-    selected_exchange = st.selectbox(
-        "选择一个交易所查看详情",
+
+    # 使用多选框代替下拉菜单
+    selected_exchanges = st.multiselect(
+        "选择要比较的交易所",
         options=exchange_list,
+        default=exchange_list[:3] if len(exchange_list) >= 3 else exchange_list, # 默认选择前三个
         format_func=lambda x: x.capitalize()
     )
 
-    if selected_exchange:
-        data = qualitative_data[selected_exchange]
-        st.subheader(f"{selected_exchange.capitalize()} 的详情")
+    if selected_exchanges:
+        # 筛选出所选交易所的数据
+        comparison_data = {exch: qualitative_data[exch] for exch in selected_exchanges if exch in qualitative_data}
 
-        # 使用 key_to_chinese 的键顺序以保持一致的布局
-        key_order = list(key_to_chinese.keys())
+        # 转换为DataFrame以便于显示
+        df = pd.DataFrame(comparison_data)
 
-        # 创建一个两列布局以提高可读性
-        col1, col2 = st.columns(2)
+        # 将索引（YAML键）替换为中文标签
+        df = df.rename(index=key_to_chinese)
 
-        # 将项目分配到两列中
-        for i, key in enumerate(key_order):
-            if key in data:
-                display_key = key_to_chinese.get(key, key.replace('_', ' ').capitalize())
-                value = data[key]
+        # 确保所有可能的键都存在，即使在某些交易所中数据缺失
+        all_keys_df = pd.DataFrame(index=list(key_to_chinese.values()))
+        df = all_keys_df.join(df).fillna("N/A")
 
-                # 在列之间交替
-                if i % 2 == 0:
-                    with col1:
-                        st.markdown(f"**{display_key}**")
-                        st.markdown(f"<div style='background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>{value}</div>", unsafe_allow_html=True)
-                else:
-                    with col2:
-                        st.markdown(f"**{display_key}**")
-                        st.markdown(f"<div style='background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>{value}</div>", unsafe_allow_html=True)
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("请至少选择一个交易所进行比较。")
 
 # --- 标签 7: K线图与历史数据 ---
 
@@ -460,7 +455,7 @@ def show_kline_tab(cex_providers):
             st.success(f"成功获取 {len(df)} 条记录。")
 
             # Display chart
-            st.plotly_chart(_create_candlestick_chart(df, symbol), use_container_width=True)
+            st.plotly_chart(_create_candlestick_chart(df, symbol), width='container')
 
             # Display data table in an expander
             with st.expander("查看原始数据 (包含技术指标)"):

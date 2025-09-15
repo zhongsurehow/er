@@ -38,6 +38,10 @@ def load_app_config() -> dict:
     """
     config = {}
 
+    # --- Base Path for Configuration Files ---
+    # Allow overriding the config path via an environment variable for flexibility.
+    config_base_path = os.getenv("CONFIG_PATH", "config")
+
     # --- Database Configuration ---
     config['db_dsn'] = os.getenv("DB_DSN")
 
@@ -60,8 +64,8 @@ def load_app_config() -> dict:
     }
 
     # --- Arbitrage Engine Settings ---
-    # Note: Paths are relative to the project root where the app is run.
-    fee_config = load_yaml_config('config/fees.yml')
+    fees_path = os.path.join(config_base_path, 'fees.yml')
+    fee_config = load_yaml_config(fees_path)
     config['arbitrage'] = {
         'threshold': 0.2,
         'fees': fee_config,
@@ -72,6 +76,7 @@ def load_app_config() -> dict:
     }
 
     # --- Qualitative Data ---
-    config['qualitative_data'] = load_yaml_config('config/qualitative_data.yml')
+    qualitative_data_path = os.path.join(config_base_path, 'qualitative_data.yml')
+    config['qualitative_data'] = load_yaml_config(qualitative_data_path)
 
     return config

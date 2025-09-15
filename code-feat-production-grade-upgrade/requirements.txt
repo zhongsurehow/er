@@ -1,6 +1,7 @@
 streamlit
 pandas
 ccxt
+ccxt-pro
 # The 'ccxt-pro' package is a commercial product and is not available on PyPI.
 # It must be installed separately from the private GitHub repository after purchase.
 # The application includes a mock version for development purposes if ccxt-pro is not found.
